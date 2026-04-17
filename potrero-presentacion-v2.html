@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Potrero — Tu campo, tus números</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --v1:#1E4230; --v2:#2A5438; --v3:#3D6B48; --v4:#4E7D5A;
+  --oro:#C8A971; --oro2:#DFC08A; --oro3:#F0D9A8;
+  --crema:#E8DCC4; --crema2:#F4EFE3;
+  --dark:#0C1A10; --dark2:#111D14;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:var(--dark);font-family:'DM Sans',sans-serif;overflow:hidden;color:var(--crema)}
+.deck{width:100%;height:100%;position:relative;overflow:hidden}
+
+/* SLIDES */
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;padding:4vh 5vw;opacity:0;transform:translateX(50px);transition:opacity .4s cubic-bezier(.4,0,.2,1),transform .4s cubic-bezier(.4,0,.2,1);pointer-events:none;overflow:hidden}
+.slide.active{opacity:1;transform:translateX(0);pointer-events:all}
+.slide.exit{opacity:0;transform:translateX(-50px)}
+
+/* BG TEXTURE */
+.slide::before{content:'';position:absolute;inset:0;background:var(--v1);z-index:0}
+.slide::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 75% 30%,rgba(200,169,113,.06) 0%,transparent 70%);z-index:0;pointer-events:none}
+.slide>*{position:relative;z-index:1}
+
+/* TYPOGRAPHY */
+.serif{font-family:'Lora',serif}
+.t-hero{font-size:clamp(3rem,7vw,5.5rem);font-weight:700;line-height:1.04;letter-spacing:-.025em}
+.t-big{font-size:clamp(1.8rem,3.8vw,3rem);font-weight:600;line-height:1.1;letter-spacing:-.02em}
+.t-mid{font-size:clamp(1rem,2vw,1.5rem);font-weight:400;line-height:1.45}
+.t-sm{font-size:clamp(.8rem,1.2vw,.95rem);font-weight:300;line-height:1.6}
+.t-label{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;font-weight:500}
+.oro{color:var(--oro)} .crema{color:var(--crema)} .muted{color:var(--v3)}
+.rule{width:36px;height:2px;background:var(--oro);margin:.9rem 0 1.1rem}
+
+/* NAV */
+.nav-btn{position:fixed;top:50%;transform:translateY(-50%);background:rgba(12,26,16,.7);border:1px solid var(--v3);color:var(--crema);width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;transition:all .2s;z-index:200;backdrop-filter:blur(8px)}
+.nav-btn:hover{background:var(--v2);border-color:var(--oro)}
+.nav-btn.prev{left:1.5vw}.nav-btn.next{right:1.5vw}
+.dots{position:fixed;bottom:2.5vh;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;z-index:200}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--v3);cursor:pointer;transition:all .3s}
+.dot.on{width:20px;border-radius:2.5px;background:var(--oro)}
+.snum{position:fixed;top:2.5vh;right:2.5vw;font-size:10px;color:var(--v3);letter-spacing:.08em;z-index:200}
+
+/* ── SLIDE 1: PORTADA ── */
+.s1{align-items:center;justify-content:center;text-align:center;gap:0}
+
+/* ── SLIDE 2: PROBLEMA ── */
+.s2{justify-content:center;gap:0}
+.pain-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5vw;margin-top:2rem}
+.pain-card{border:1px solid var(--v2);border-radius:12px;padding:1.25rem 1rem;display:flex;flex-direction:column;gap:.5rem;transition:border-color .2s}
+.pain-card:hover{border-color:var(--oro)}
+.pain-n{font-size:2rem;font-family:'Lora',serif;font-weight:700;color:var(--oro);line-height:1}
+.pain-t{font-size:.88rem;font-weight:500;color:var(--crema);line-height:1.4}
+.pain-d{font-size:.78rem;color:var(--v3);line-height:1.5;margin-top:.25rem}
+
+/* ── SLIDE 3: SOLUCIÓN ── */
+.s3{justify-content:center}
+.sol-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5vw;margin-top:1.75rem}
+.sol-col{background:var(--dark2);border:1px solid var(--v2);border-radius:12px;padding:1.5rem 1.1rem;display:flex;flex-direction:column;gap:.6rem}
+.sol-col:hover{border-color:var(--oro);transition:border-color .2s}
+.sol-n{font-size:1.9rem;font-family:'Lora',serif;font-weight:700;color:var(--oro)}
+.sol-t{font-size:.82rem;letter-spacing:.07em;text-transform:uppercase;color:var(--crema);font-weight:500}
+.sol-d{font-size:.78rem;color:var(--v3);line-height:1.55}
+
+/* ── SLIDE 4: MÓDULOS ── */
+.mods{display:grid;grid-template-columns:repeat(5,1fr);gap:1.2vw;margin-top:1.5rem}
+.mod{background:var(--dark2);border:1px solid var(--v2);border-radius:10px;padding:1.1rem .9rem;display:flex;flex-direction:column;gap:.55rem;transition:border-color .2s}
+.mod:hover{border-color:var(--oro)}
+.mod-n{font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:var(--oro);font-weight:500}
+.mod-d{font-size:.72rem;color:var(--crema);line-height:1.5}
+
+/* ── SLIDE 5: DASHBOARD ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1vw;margin-top:1.2rem}
+.kpi{background:var(--dark2);border:1px solid var(--v2);border-radius:10px;padding:.9rem 1rem}
+.kpi.highlight{border-color:rgba(200,169,113,.4);background:rgba(200,169,113,.04)}
+.kpi-lbl{font-size:.62rem;letter-spacing:.09em;text-transform:uppercase;color:var(--v3);margin-bottom:.3rem}
+.kpi-val{font-size:1.5rem;font-family:'Lora',serif;font-weight:700;color:var(--oro);line-height:1}
+.kpi-sub{font-size:.65rem;color:var(--crema);margin-top:.2rem;opacity:.7}
+.kpi-badge{display:inline-block;background:rgba(200,169,113,.15);border:1px solid rgba(200,169,113,.3);border-radius:20px;font-size:.58rem;color:var(--oro);padding:.15rem .5rem;margin-top:.3rem;letter-spacing:.05em}
+.bar-track{height:3px;background:var(--v2);border-radius:2px;margin-top:.5rem;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;background:var(--oro)}
+
+.alert-strip{background:rgba(200,169,113,.06);border:1px solid rgba(200,169,113,.2);border-radius:10px;padding:.65rem 1rem;display:flex;align-items:flex-start;gap:.75rem;margin-top:.9rem}
+.alert-dot{width:7px;height:7px;border-radius:50%;background:var(--oro);flex-shrink:0;margin-top:.3rem}
+.alert-t{font-size:.72rem;color:var(--crema);line-height:1.5}
+.alert-t strong{color:var(--oro)}
+
+/* ── SLIDE 6: INVENTARIO ── */
+.inv-top{display:grid;grid-template-columns:repeat(5,1fr);gap:1vw;margin-top:1.2rem}
+.inv-kpi{background:var(--dark2);border:1px solid var(--v2);border-radius:10px;padding:.8rem .9rem}
+.inv-lbl{font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--v3);margin-bottom:.25rem}
+.inv-val{font-size:1.2rem;font-family:'Lora',serif;font-weight:700;color:var(--oro)}
+.inv-sub{font-size:.62rem;color:var(--crema);margin-top:.15rem;opacity:.7}
+
+.cat-table{width:100%;margin-top:1rem;border-collapse:collapse}
+.cat-table th{font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--v3);padding:.4rem .6rem;border-bottom:1px solid var(--v2);text-align:left;font-weight:400}
+.cat-table td{font-size:.75rem;color:var(--crema);padding:.35rem .6rem;border-bottom:1px solid rgba(61,107,72,.3)}
+.cat-table tr:hover td{background:rgba(200,169,113,.03)}
+.pos{color:#5DB87A}.neg{color:#E07070}
+
+/* ── SLIDE 7: CASCADA ── */
+.casc-wrap{display:flex;gap:0;margin-top:1.5rem;border-radius:12px;overflow:hidden}
+.casc-step{flex:1;background:var(--dark2);padding:1.1rem .9rem;border-right:1px solid var(--v2);display:flex;flex-direction:column;gap:.3rem}
+.casc-step:last-child{border-right:none;border:1px solid rgba(200,169,113,.3);margin:-1px;border-radius:0 12px 12px 0}
+.casc-lbl{font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--v3)}
+.casc-val{font-size:1.05rem;font-family:'Lora',serif;font-weight:700;color:var(--oro)}
+.casc-ha{font-size:.65rem;color:var(--crema);opacity:.6}
+.casc-bar{height:3px;border-radius:2px;background:var(--v2);overflow:hidden;margin-top:.4rem}
+.casc-fill{height:100%;border-radius:2px;background:var(--oro)}
+
+.cost-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1vw;margin-top:1rem}
+.cost-item{background:var(--dark2);border:1px solid var(--v2);border-radius:10px;padding:.8rem .9rem}
+.cost-lbl{font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--v3);margin-bottom:.25rem}
+.cost-val{font-size:1.15rem;font-family:'Lora',serif;font-weight:700;color:var(--crema)}
+.cost-sub{font-size:.65rem;color:var(--v3);margin-top:.2rem}
+
+/* ── SLIDE 8: PRODUCCIÓN MENSUAL ── */
+.chart-wrap{flex:1;position:relative;margin-top:1rem;min-height:0}
+.time-pills{display:flex;gap:.6rem;margin-top:1rem}
+.tpill{background:var(--dark2);border:1px solid var(--v2);border-radius:20px;padding:.3rem .9rem;font-size:.72rem;color:var(--v3);cursor:pointer;transition:all .2s}
+.tpill.on{background:rgba(200,169,113,.12);border-color:var(--oro);color:var(--oro)}
+
+/* ── SLIDE 9: ROADMAP ── */
+.road-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2vw;margin-top:1.5rem}
+.road-card{background:var(--dark2);border:1px solid var(--v2);border-radius:12px;padding:1.2rem 1.1rem;display:flex;flex-direction:column;gap:.6rem}
+.road-card.soon{border-color:rgba(200,169,113,.3);background:rgba(200,169,113,.03)}
+.road-badge{display:inline-flex;align-items:center;gap:.35rem;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--oro);background:rgba(200,169,113,.1);border-radius:20px;padding:.2rem .6rem;width:fit-content}
+.road-dot{width:5px;height:5px;border-radius:50%;background:var(--oro);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.road-t{font-size:.85rem;font-weight:500;color:var(--crema)}
+.road-items{display:flex;flex-direction:column;gap:.35rem}
+.road-item{font-size:.72rem;color:var(--v3);display:flex;align-items:flex-start;gap:.5rem;line-height:1.4}
+.road-item::before{content:'→';color:var(--oro);font-size:.65rem;margin-top:.1rem;flex-shrink:0}
+
+/* ── SLIDE 10: CIERRE ── */
+.s10{align-items:center;justify-content:center;text-align:center}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5vw;margin-top:2rem;max-width:800px}
+.step{border:1px solid var(--v2);border-radius:12px;padding:1.5rem 1rem;text-align:left}
+.step-n{font-size:1.9rem;font-family:'Lora',serif;font-weight:700;color:var(--oro)}
+.step-t{font-size:.82rem;font-weight:500;color:var(--crema);margin-top:.35rem}
+.step-d{font-size:.72rem;color:var(--v3);margin-top:.3rem;line-height:1.5}
+
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+<!-- ═══════════════════════ 1 · PORTADA ═══════════════════════ -->
+<div class="slide s1" data-i="0">
+  <div style="margin-bottom:2.2rem">
+    <svg viewBox="0 0 170 130" width="210" height="161" fill="none">
+      <circle cx="85" cy="62" r="30" fill="#C8A971"/>
+      <line x1="14" y1="96" x2="156" y2="96" stroke="#C8A971" stroke-width="3" stroke-linecap="round"/>
+      <line x1="14" y1="108" x2="156" y2="108" stroke="#2A5438" stroke-width="2" stroke-linecap="round" opacity=".5"/>
+      <path d="M68 96 L68 79 L85 62 L102 79 L102 96 Z" fill="#1E4230"/>
+      <path d="M68 79 L85 62 L102 79" stroke="#E8DCC4" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/>
+      <line x1="68" y1="79" x2="68" y2="96" stroke="#E8DCC4" stroke-width="3.2" stroke-linecap="round"/>
+      <line x1="102" y1="79" x2="102" y2="96" stroke="#E8DCC4" stroke-width="3.2" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <h1 class="t-hero serif crema" style="letter-spacing:-.03em">Potrero</h1>
+  <div class="rule" style="margin:.8rem auto 1rem"></div>
+  <p class="t-mid serif oro" style="font-style:italic">Tu campo, tus números.</p>
+  <p class="t-label muted" style="margin-top:1.5rem">Gestión Ganadera Profesional · Santa Cruz, Bolivia</p>
+</div>
+
+<!-- ═══════════════════════ 2 · EL PROBLEMA ═══════════════════════ -->
+<div class="slide" data-i="1" style="justify-content:center">
+  <p class="t-label oro">El problema</p>
+  <div class="rule"></div>
+  <h2 class="t-big serif crema" style="max-width:660px">
+    "¿Cuánto te costó <span class="oro">cada kilo</span><br/>el año pasado?"
+  </h2>
+  <p style="font-size:clamp(.85rem,1.4vw,1rem);color:var(--v3);margin-top:.6rem;max-width:480px">La mayoría de los productores no lo sabe con exactitud. Y eso cuesta plata.</p>
+
+  <div class="pain-grid" style="max-width:900px">
+    <div class="pain-card">
+      <span class="pain-n">01</span>
+      <span class="pain-t">Los datos quedan en el escritorio</span>
+      <span class="pain-d">Las planillas de Excel no viajan al campo. Se desactualizan. Cada quien tiene su versión.</span>
+    </div>
+    <div class="pain-card">
+      <span class="pain-n">02</span>
+      <span class="pain-t">Los números llegan tarde</span>
+      <span class="pain-d">Cuando terminás de calcular el resultado del ejercicio, la temporada ya pasó. Las decisiones se tomaron a ojo.</span>
+    </div>
+    <div class="pain-card">
+      <span class="pain-n">03</span>
+      <span class="pain-t">Sin referencia del sector</span>
+      <span class="pain-d">¿Tu margen bruto es bueno o malo? Sin un benchmark, no sabés si tu campo está rindiendo al máximo.</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ 3 · SOLUCIÓN ═══════════════════════ -->
+<div class="slide" data-i="2" style="justify-content:center">
+  <p class="t-label oro">La solución</p>
+  <div class="rule"></div>
+  <h2 class="t-big serif crema" style="max-width:700px">
+    Potrero pone los números de tu estancia en orden.<br/>
+    <span style="color:var(--v3);font-size:clamp(1.2rem,2.5vw,2rem)">Desde el celular. En tiempo real.</span>
+  </h2>
+
+  <div class="sol-cols" style="max-width:860px;margin-top:1.75rem">
+    <div class="sol-col">
+      <span class="sol-n">01</span>
+      <span class="sol-t">Medí</span>
+      <span class="sol-d">Inventario por las 13 categorías ganaderas. Movimientos, altas, bajas y transferencias. Siempre actualizado.</span>
+    </div>
+    <div class="sol-col">
+      <span class="sol-n">02</span>
+      <span class="sol-t">Analizá</span>
+      <span class="sol-d">Cascada económica completa. Del Ingreso Neto al Resultado Operativo. Por hectárea y por cabeza.</span>
+    </div>
+    <div class="sol-col">
+      <span class="sol-n">03</span>
+      <span class="sol-t">Decidí</span>
+      <span class="sol-d">Indicadores de referencia del sector. Alertas. Pluviometría. Todo en un panel de control, disponible 24/7.</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ 4 · MÓDULOS ═══════════════════════ -->
+<div class="slide" data-i="3">
+  <p class="t-label oro">La plataforma</p>
+  <div class="rule"></div>
+  <h2 class="t-big serif crema">5 módulos. Todo en una sola plataforma.</h2>
+  <div class="mods">
+    <div class="mod">
+      <svg viewBox="0 0 32 32" width="28" height="28" fill="none"><rect x="3" y="3" width="9" height="9" rx="2" fill="#C8A971" opacity=".9"/><rect x="20" y="3" width="9" height="9" rx="2" fill="#C8A971" opacity=".5"/><rect x="3" y="20" width="9" height="9" rx="2" fill="#C8A971" opacity=".5"/><rect x="20" y="20" width="9" height="9" rx="2" fill="#C8A971" opacity=".25"/></svg>
+      <span class="mod-n">Panel de control</span>
+      <span class="mod-d">KPIs clave al instante. Indicadores productivos y económicos del ejercicio en una sola vista.</span>
+    </div>
+    <div class="mod">
+      <svg viewBox="0 0 32 32" width="28" height="28" fill="none"><circle cx="16" cy="11" r="5.5" stroke="#C8A971" stroke-width="2.2" fill="none"/><path d="M6 28 Q6 20 16 20 Q26 20 26 28" stroke="#C8A971" stroke-width="2.2" stroke-linecap="round" fill="none"/><circle cx="25" cy="11" r="3.5" stroke="#C8A971" stroke-width="1.8" fill="none" opacity=".45"/></svg>
+      <span class="mod-n">Inventario ganadero</span>
+      <span class="mod-d">13 categorías. Stock, movimientos, producción de carne mensual y carga animal UA/ha.</span>
+    </div>
+    <div class="mod">
+      <svg viewBox="0 0 32 32" width="28" height="28" fill="none"><line x1="5" y1="25" x2="5" y2="10" stroke="#C8A971" stroke-width="2.2" stroke-linecap="round"/><line x1="12" y1="25" x2="12" y2="6" stroke="#C8A971" stroke-width="2.2" stroke-linecap="round"/><line x1="19" y1="25" x2="19" y2="13" stroke="#C8A971" stroke-width="2.2" stroke-linecap="round"/><line x1="26" y1="25" x2="26" y2="8" stroke="#C8A971" stroke-width="2.2" stroke-linecap="round"/><line x1="3" y1="25" x2="29" y2="25" stroke="#C8A971" stroke-width="1.5" stroke-linecap="round" opacity=".4"/></svg>
+      <span class="mod-n">Gestión económica</span>
+      <span class="mod-d">Cascada de márgenes. Gastos por categoría, ingresos, finanzas y comparación con indicadores del sector.</span>
+    </div>
+    <div class="mod">
+      <svg viewBox="0 0 32 32" width="28" height="28" fill="none"><rect x="4" y="4" width="24" height="24" rx="3" stroke="#C8A971" stroke-width="2.2" fill="none"/><path d="M4 14 Q10 8 16 12 Q22 16 28 10" stroke="#C8A971" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".5"/><circle cx="16" cy="16" r="3" fill="#C8A971"/></svg>
+      <span class="mod-n">Potreros</span>
+      <span class="mod-d">Mapa satelital de tus potreros. Carga animal por potrero, rotación y superficie ganadera.</span>
+    </div>
+    <div class="mod">
+      <svg viewBox="0 0 32 32" width="28" height="28" fill="none"><path d="M9 7 Q9 3 13 3 Q15 3 16 5 Q17 1 21 1 Q26 1 26 6 Q29 6 30 9 Q32 12 29 14 L7 14 Q4 12 5 9 Q6 7 9 7Z" stroke="#C8A971" stroke-width="2" fill="none"/><line x1="11" y1="19" x2="11" y2="27" stroke="#C8A971" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="17" x2="16" y2="29" stroke="#C8A971" stroke-width="2" stroke-linecap="round"/><line x1="21" y1="19" x2="21" y2="27" stroke="#C8A971" stroke-width="2" stroke-linecap="round"/></svg>
+      <span class="mod-n">Pluviometría</span>
+      <span class="mod-d">Registro de lluvias por potrero. Acumulado vs. esperado y alertas de sequía o exceso hídrico.</span>
+    </div>
+  </div>
+
+  <!-- Mapa real embed -->
+  <div style="margin-top:1rem;border:1px solid var(--v2);border-radius:10px;overflow:hidden;display:flex;align-items:stretch;gap:0">
+    <div style="flex:1;padding:.7rem 1rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap">
+      <div><span class="t-label" style="color:var(--v3)">La Flauta · Santa Cruz</span><br/><span style="font-size:.85rem;color:var(--crema)"><strong style="color:var(--oro)">2,299 ha</strong> total · <strong style="color:var(--oro)">1,443 ha</strong> ganadera</span></div>
+      <div><span style="font-size:.78rem;color:var(--v3)">24 potreros activos</span><br/><span style="font-size:.85rem;color:var(--crema)"><strong style="color:var(--oro)">2,308</strong> cabezas</span></div>
+      <div><span style="font-size:.78rem;color:var(--v3)">Stock actual</span><br/><span style="font-size:.85rem;color:var(--crema)"><strong style="color:var(--oro)">3,835</strong> cab · 868,292 kg</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ 5 · DASHBOARD ═══════════════════════ -->
+<div class="slide" data-i="4">
+  <p class="t-label oro">Panel de control</p>
+  <div class="rule"></div>
+  <h2 class="t-big serif crema" style="max-width:640px">Todo lo que importa, en una pantalla.</h2>
+  <p class="t-sm" style="color:var(--v3)">La Flauta · Ejercicio 2024/2025</p>
+
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1vw;margin-top:1rem">
+    <!-- Indicadores productivos -->
+    <div>
+      <p class="t-label" style="color:var(--v3);margin-bottom:.6rem">Indicadores productivos</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8vw">
+        <div class="kpi">
+          <div class="kpi-lbl">Producción de carne</div>
+          <div class="kpi-val">228 kg/ha</div>
+          <div class="kpi-sub">328,990 kg total</div>
+          <div class="bar-track"><div class="bar-fill" style="width:75%"></div></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-lbl">Carga animal</div>
+          <div class="kpi-val">0.89 UA/ha</div>
+          <div class="kpi-sub">Existencia media 2,308 cab</div>
+          <div class="bar-track"><div class="bar-fill" style="width:60%"></div></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-lbl">GDPV</div>
+          <div class="kpi-val">0.391 kg/día</div>
+          <div class="kpi-sub">143 kg/cab anual</div>
+          <div class="bar-track"><div class="bar-fill" style="width:55%"></div></div>
+        </div>
+        <div class="kpi highlight">
+          <div class="kpi-lbl">Eficiencia de stock</div>
+          <div class="kpi-val">56.7%</div>
+          <div class="kpi-sub">Benchmark: 50%</div>
+          <div class="kpi-badge">↑ Por encima del sector</div>
+        </div>
+      </div>
+    </div>
+    <!-- Indicadores económicos -->
+    <div>
+      <p class="t-label" style="color:var(--v3);margin-bottom:.6rem">Indicadores económicos</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8vw">
+        <div class="kpi highlight">
+          <div class="kpi-lbl">Costo por kg vivo</div>
+          <div class="kpi-val">$0.75/kg</div>
+          <div class="kpi-sub">Dir $0.50 · Ind $0.26</div>
+          <div class="kpi-badge">Indicador sectorial</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-lbl">Margen bruto</div>
+          <div class="kpi-val">$477/ha</div>
+          <div class="kpi-sub">Total $688,748</div>
+          <div class="bar-track"><div class="bar-fill" style="width:80%"></div></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-lbl">Resultado operativo</div>
+          <div class="kpi-val">$426/ha</div>
+          <div class="kpi-sub">Total $615,707</div>
+          <div class="bar-track"><div class="bar-fill" style="width:72%"></div></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-lbl">Gasto / cab / mes</div>
+          <div class="kpi-val">$7.70</div>
+          <div class="kpi-sub">Benchmark: $11.00</div>
+          <div class="kpi-badge">↓ Eficiente</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert-strip" style="max-width:100%">
+    <div class="alert-dot"></div>
+    <span class="alert-t">
+      <strong>3 alertas activas:</strong> 365 días sin lluvia (0 mm vs 1,260 mm esperados) · Precipitaciones 100% debajo de lo esperado ·
+      <span style="color:#5DB87A">✓ Margen bruto $477/ha supera el top 30% del sector ($260/ha) — ¡Excelente gestión!</span>
+    </span>
+  </div>
+</div>
+
+<!-- ═══════════════════════ 6 · INVENTARIO ═══════════════════════ -->
+<div class="slide" data-i="5">
+  <p class="t-label oro">Inventario ganadero</p>
+  <div class="rule"></div>
+  <h2 class="t-big serif crema" style="max-width:640px">Tu rodeo, categoría por categoría.</h2>
+  <p class="t-sm" style="color:var(--v3)">La Flauta · Ejercicio 2024/2025 · Inventario Final</p>
+
+  <div class="inv-top">
+    <div class="inv-kpi">
+      <div class="inv-lbl">Cabezas IF</div>
+      <div class="inv-val">3,463</div>
+      <div class="inv-sub" style="color:#5DB87A">+1,568 vs inicio</div>
+    </div>
+    <div class="inv-kpi">
+      <div class="inv-lbl">Peso total IF</div>
+      <div class="inv-val">931,970 kg</div>
+      <div class="inv-sub" style="color:#5DB87A">+454,112 kg</div>
+    </div>
+    <div class="inv-kpi">
+      <div class="inv-lbl">Valor total IF</div>
+      <div class="inv-val">$3.0M</div>
+      <div class="inv-sub" style="color:#5DB87A">+$2,191,643</div>
+    </div>
+    <div class="inv-kpi">
+      <div class="inv-lbl">Producción</div>
+      <div class="inv-val">328,990 kg</div>
+      <div class="inv-sub">228 kg/ha · 143 kg/cab</div>
+    </div>
+    <div class="inv-kpi" style="border-color:rgba(200,169,113,.35)">
+      <div class="inv-lbl">Efic. de stock</div>
+      <div class="inv-val" style="color:#5DB87A">56.7%</div>
+      <div class="inv-sub">vs benchmark 50%</div>
+    </div>
+  </div>
+
+  <table class="cat-table" style="margin-top:.9rem">
+    <thead>
+      <tr>
+        <th>Categoría</th>
+        <th>II cab</th><th>IF cab</th><th>IF kg prom</th><th>IF total kg</th>
+        <th>Δ cab</th><th>Δ USD</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Terneros (0-12 m)</td><td>340</td><td>485</td><td>210 kg</td><td>101,850</td><td class="pos">+145</td><td class="pos">+$224,198</td></tr>
+      <tr><td>Terneras (0-12 m)</td><td>0</td><td>495</td><td>212 kg</td><td>104,940</td><td class="pos">+495</td><td class="pos">+$316,624</td></tr>
+      <tr><td>Novillos 1-2 (13-24 m)</td><td>1,555</td><td>2,060</td><td>301 kg</td><td>620,297</td><td class="pos">+505</td><td class="pos">+$1,349,427</td></tr>
+      <tr><td>Vaquillonas V (13-24 m)</td><td>0</td><td>423</td><td>248 kg</td><td>104,883</td><td class="pos">+423</td><td class="pos">+$301,391</td></tr>
+      <tr style="opacity:.5"><td colspan="7" style="font-size:.68rem;color:var(--v3);padding:.3rem .6rem">+ categorías adicionales…</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════════ 7 · ECONOMÍA ═══════════════════════ -->
+<div class="slide" data-i="6">
+  <p class="t-label oro">Gestión económica</p>
+  <div class="rule"></div>
+  <h2 class="t-big serif crema" style="max-width:640px">Sabé exactamente cuánto genera tu campo.</h2>
+  <p class="t-sm" style="color:var(--v3)">Cascada de márgenes · La Flauta · 2024/2025 · Precio venta $2.30/kg · Costo $0.75/kg</p>
+
+  <div class="casc-wrap" style="max-width:100%">
+    <div class="casc-step"><div class="casc-lbl">Ingreso Neto</div><div class="casc-val">$852,183</div><div class="casc-ha">$590.56/ha</div><div class="casc-bar"><div class="casc-fill" style="width:100%"></div></div></div>
+    <div class="casc-step"><div class="casc-lbl">Contrib. Marginal</div><div class="casc-val">$787,324</div><div class="casc-ha">$545.62/ha</div><div class="casc-bar"><div class="casc-fill" style="width:92%"></div></div></div>
+    <div class="casc-step"><div class="casc-lbl">Margen Bruto</div><div class="casc-val">$688,748</div><div class="casc-ha">$477.30/ha</div><div class="casc-bar"><div class="casc-fill" style="width:81%"></div></div></div>
+    <div class="casc-step"><div class="casc-lbl">Resul. Operativo</div><div class="casc-val">$615,707</div><div class="casc-ha">$426.69/ha</div><div class="casc-bar"><div class="casc-fill" style="width:72%"></div></div></div>
+    <div class="casc-step"><div class="casc-lbl">Resul. Productivo</div><div class="casc-val">$595,505</div><div class="casc-ha">$412.69/ha</div><div class="casc-bar"><div class="casc-fill" style="width:70%"></div></div></div>
+    <div class="casc-step"><div class="casc-lbl">Resultado Final</div><div class="casc-val" style="color:#5DB87A">$595,505</div><div class="casc-ha">$412.69/ha</div><div class="casc-bar"><div class="casc-fill" style="width:70%;background:#5DB87A"></div></div></div>
+  </div>
+
+  <div class="cost-grid" style="margin-top:.9rem">
+    <div class="cost-item">
+      <div class="cost-lbl">Gastos Dir. Variables</div>
+      <div class="cost-val">$64,858</div>
+      <div class="cost-sub">Nutrición 60% · Sanidad 40%</div>
+    </div>
+    <div class="cost-item">
+      <div class="cost-lbl">Gastos Dir. Fijos</div>
+      <div class="cost-val">$98,576</div>
+      <div class="cost-sub">Personal 55% · Mantenimiento 19%</div>
+    </div>
+    <div class="cost-item">
+      <div class="cost-lbl">Gastos Indirectos</div>
+      <div class="cost-val">$55,724</div>
+      <div class="cost-sub">Administración 96%</div>
+    </div>
+    <div class="cost-item" style="border-color:rgba(200,169,113,.35)">
+      <div class="cost-lbl">Total gastos</div>
+      <div class="cost-val" style="color:var(--oro)">$250,068</div>
+      <div class="cost-sub">$173/ha · Prom. sector $177/ha</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ 8 · PRODUCCIÓN MENSUAL ═══════════════════════ -->
+<div class="slide" data-i="7" style="overflow:hidden">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
+    <div>
+      <p class="t-label oro">Producción &amp; gastos</p>
+      <div class="rule"></div>
+      <h2 class="t-big serif crema" style="max-width:580px">Seguí la evolución mensual de tu campo.</h2>
+      <p class="t-sm" style="color:var(--v3)">Producción acumulada · Gastos mensuales · Indicadores por intervalo</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:.5rem;align-items:flex-end;margin-top:.5rem">
+      <div style="display:flex;gap:.5rem">
+        <div style="display:flex;align-items:center;gap:.4rem"><span style="width:10px;height:3px;background:#C8A971;display:inline-block;border-radius:2px"></span><span style="font-size:.68rem;color:var(--v3)">Prod. acumulada</span></div>
+        <div style="display:flex;align-items:center;gap:.4rem"><span style="width:10px;height:10px;background:#4A7A5A;display:inline-block;border-radius:2px;opacity:.8"></span><span style="font-size:.68rem;color:var(--v3)">Gastos totales</span></div>
+      </div>
+      <div class="time-pills" style="margin-top:0">
+        <div class="tpill on" onclick="setView('anual',this)">Anual</div>
+        <div class="tpill" onclick="setView('semestral',this)">Semestral</div>
+        <div class="tpill" onclick="setView('trimestral',this)">Trimestral</div>
+      </div>
+    </div>
+  </div>
+  <div class="chart-wrap" style="flex:1;min-height:0;margin-top:.75rem">
+    <canvas id="prodChart"></canvas>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.8vw;margin-top:.75rem">
+    <div class="kpi" style="padding:.6rem .8rem">
+      <div class="kpi-lbl">Nutrición / mes</div>
+      <div class="kpi-val" style="font-size:1rem">$3,241</div>
+      <div class="kpi-sub">60% gastos variables</div>
+    </div>
+    <div class="kpi" style="padding:.6rem .8rem">
+      <div class="kpi-lbl">Sanidad / mes</div>
+      <div class="kpi-val" style="font-size:1rem">$2,161</div>
+      <div class="kpi-sub">40% gastos variables</div>
+    </div>
+    <div class="kpi" style="padding:.6rem .8rem">
+      <div class="kpi-lbl">Administración / mes</div>
+      <div class="kpi-val" style="font-size:1rem">$4,477</div>
+      <div class="kpi-sub">96% gastos indirectos</div>
+    </div>
+    <div class="kpi highlight" style="padding:.6rem .8rem">
+      <div class="kpi-lbl">Producción acum. 2025</div>
+      <div class="kpi-val" style="font-size:1rem">63,677 kg</div>
+      <div class="kpi-sub">44 kg/ha · 10 meses</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ 9 · ROADMAP ═══════════════════════ -->
+<div class="slide" data-i="8">
+  <p class="t-label oro">Próximos módulos</p>
+  <div class="rule"></div>
+  <h2 class="t-big serif crema" style="max-width:700px">Potrero crece con tu estancia.</h2>
+  <p class="t-sm" style="color:var(--v3);max-width:520px">Módulos en desarrollo activo basados en las necesidades reales de los productores.</p>
+
+  <div class="road-grid" style="margin-top:1.25rem">
+
+    <div class="road-card soon">
+      <div class="road-badge"><div class="road-dot"></div>En desarrollo</div>
+      <div class="road-t">Módulo de Nutrición</div>
+      <div class="road-items">
+        <div class="road-item">Formulación de dietas para cada categoría</div>
+        <div class="road-item">Control de stock de sales minerales y concentrado</div>
+        <div class="road-item">Costo de nutrición por cabeza por mes</div>
+      </div>
+    </div>
+
+    <div class="road-card soon">
+      <div class="road-badge"><div class="road-dot"></div>En desarrollo</div>
+      <div class="road-t">Módulo de Actividades</div>
+      <div class="road-items">
+        <div class="road-item">Trabajos de corral y sanidades puntuales por animal</div>
+        <div class="road-item">Actividades pendientes (alambres, caminos, aguadas)</div>
+        <div class="road-item">Historial sanitario por lote</div>
+      </div>
+    </div>
+
+    <div class="road-card soon">
+      <div class="road-badge"><div class="road-dot"></div>En desarrollo</div>
+      <div class="road-t">Potreros avanzado</div>
+      <div class="road-items">
+        <div class="road-item">Rotación detallada con días de descanso y ocupación</div>
+        <div class="road-item">Carga animal por potrero en tiempo real</div>
+        <div class="road-item">Historial de pastoreo por potrero</div>
+      </div>
+    </div>
+
+    <div class="road-card">
+      <div class="road-badge" style="background:rgba(61,107,72,.2);color:var(--v4)"><div style="width:5px;height:5px;border-radius:50%;background:var(--v4)"></div>Planificado</div>
+      <div class="road-t">Benchmarking anónimo</div>
+      <div class="road-items">
+        <div class="road-item">Comparación de todos los indicadores entre fincas</div>
+        <div class="road-item">100% anónimo — vos ves tu posición en el sector</div>
+        <div class="road-item">Percentiles por región y escala de finca</div>
+      </div>
+    </div>
+
+    <div class="road-card">
+      <div class="road-badge" style="background:rgba(61,107,72,.2);color:var(--v4)"><div style="width:5px;height:5px;border-radius:50%;background:var(--v4)"></div>Planificado</div>
+      <div class="road-t">Precios del mercado</div>
+      <div class="road-items">
+        <div class="road-item">Precio de la carne en Bolivia actualizado</div>
+        <div class="road-item">Precio de la @ en los principales estados de Brasil</div>
+        <div class="road-item">Referencia del mercado internacional integrada</div>
+      </div>
+    </div>
+
+    <div class="road-card">
+      <div class="road-badge" style="background:rgba(61,107,72,.2);color:var(--v4)"><div style="width:5px;height:5px;border-radius:50%;background:var(--v4)"></div>Planificado</div>
+      <div class="road-t">Múltiples estancias</div>
+      <div class="road-items">
+        <div class="road-item">Gestión de varias fincas desde una sola cuenta</div>
+        <div class="road-item">Comparación de indicadores entre tus propiedades</div>
+        <div class="road-item">Panel consolidado multi-estancia</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ 10 · CIERRE ═══════════════════════ -->
+<div class="slide s10" data-i="9">
+  <p class="t-label oro">Empezamos hoy</p>
+  <div class="rule" style="margin:.8rem auto 1rem"></div>
+  <h2 class="t-big serif crema" style="max-width:620px">Tu estancia en el sistema.<br/>Esta semana.</h2>
+
+  <div class="steps" style="margin-top:1.75rem">
+    <div class="step">
+      <div class="step-n">01</div>
+      <div class="step-t">Demo en tu celular</div>
+      <div class="step-d">Hoy mismo te mostramos la plataforma con datos reales de una estancia de la región.</div>
+    </div>
+    <div class="step">
+      <div class="step-n">02</div>
+      <div class="step-t">Cargamos tu estancia</div>
+      <div class="step-d">Inventario, potreros y primer ejercicio configurados en menos de 24 horas.</div>
+    </div>
+    <div class="step">
+      <div class="step-n">03</div>
+      <div class="step-t">Tus números, claros</div>
+      <div class="step-d">Primer mes de acompañamiento incluido. Estamos con vos hasta que el sistema sea tuyo.</div>
+    </div>
+  </div>
+
+  <div style="margin-top:2rem;display:flex;align-items:center;gap:14px">
+    <svg viewBox="0 0 130 100" width="52" height="40" fill="none">
+      <circle cx="65" cy="46" r="24" fill="#C8A971"/>
+      <line x1="10" y1="72" x2="120" y2="72" stroke="#C8A971" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M50 72 L50 58 L65 43 L80 58 L80 72 Z" fill="#1E4230"/>
+      <path d="M50 58 L65 43 L80 58" stroke="#E8DCC4" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>
+      <line x1="50" y1="58" x2="50" y2="72" stroke="#E8DCC4" stroke-width="2.8" stroke-linecap="round"/>
+      <line x1="80" y1="58" x2="80" y2="72" stroke="#E8DCC4" stroke-width="2.8" stroke-linecap="round"/>
+    </svg>
+    <div style="text-align:left">
+      <p class="serif crema" style="font-size:1.5rem;font-weight:700;letter-spacing:-.025em">Potrero</p>
+      <p style="font-size:.75rem;color:var(--oro);font-style:italic;font-family:'Lora',serif">Tu campo, tus números.</p>
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<button class="nav-btn prev" onclick="go(cur-1)">&#8592;</button>
+<button class="nav-btn next" onclick="go(cur+1)">&#8594;</button>
+<div class="dots" id="dots"></div>
+<div class="snum" id="snum"></div>
+
+<script>
+/* ── NAV ── */
+let cur=0;
+const slides=document.querySelectorAll('.slide');
+const N=slides.length;
+const dotsEl=document.getElementById('dots');
+const snumEl=document.getElementById('snum');
+
+slides.forEach((_,i)=>{
+  const d=document.createElement('div');
+  d.className='dot'+(i===0?' on':'');
+  d.onclick=()=>go(i);
+  dotsEl.appendChild(d);
+});
+
+function go(n){
+  if(n===cur||n<0||n>=N)return;
+  slides[cur].classList.remove('active');
+  slides[cur].classList.add('exit');
+  const old=cur; cur=n;
+  slides[cur].classList.add('active');
+  setTimeout(()=>slides[old].classList.remove('exit'),420);
+  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('on',i===cur));
+  snumEl.textContent=(cur+1)+' / '+N;
+  if(cur===7) initChart();
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown') go(cur+1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')    go(cur-1);
+});
+document.getElementById('deck').addEventListener('click',e=>{
+  if(!e.target.closest('.nav-btn')&&!e.target.closest('.tpill')) go(cur+1);
+});
+snumEl.textContent='1 / '+N;
+
+/* ── CHART.JS ── */
+let chartInst=null;
+const meses=['Jul','Ago','Sep','Oct','Nov','Dic','Ene','Feb','Mar','Abr','May','Jun'];
+
+const data={
+  anual:{
+    prod:[12000,22000,65000,95000,130000,148000,162000,188000,230000,265000,295000,328990],
+    gasto:[11000,9500,42000,28000,32000,17000,13500,24000,40000,33000,28500,30000],
+    labels:meses
+  },
+  semestral:{
+    prod:[148000,162000,188000,230000,265000,295000],
+    gasto:[17000,13500,24000,40000,33000,28500],
+    labels:['Dic','Ene','Feb','Mar','Abr','May']
+  },
+  trimestral:{
+    prod:[265000,295000,328990],
+    gasto:[33000,28500,30000],
+    labels:['Abr','May','Jun']
+  }
+};
+
+function initChart(view='anual'){
+  if(chartInst){chartInst.destroy();chartInst=null;}
+  const d=data[view];
+  const ctx=document.getElementById('prodChart').getContext('2d');
+  chartInst=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:d.labels,
+      datasets:[
+        {type:'line',label:'Prod. acumulada (kg)',data:d.prod,borderColor:'#C8A971',backgroundColor:'rgba(200,169,113,.08)',borderWidth:2.5,pointBackgroundColor:'#C8A971',pointRadius:4,pointHoverRadius:6,tension:.4,yAxisID:'y2',fill:true},
+        {type:'bar',label:'Gastos totales ($)',data:d.gasto,backgroundColor:'rgba(74,122,90,.65)',borderColor:'rgba(74,122,90,.9)',borderWidth:1,borderRadius:4,yAxisID:'y1'}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'rgba(12,26,16,.92)',borderColor:'rgba(200,169,113,.3)',borderWidth:1,
+          titleColor:'#E8DCC4',bodyColor:'#C8A971',padding:10,cornerRadius:8,
+          callbacks:{
+            label:ctx=>{
+              if(ctx.dataset.yAxisID==='y2') return ' Prod: '+ctx.parsed.y.toLocaleString()+' kg';
+              return ' Gastos: $'+ctx.parsed.y.toLocaleString();
+            }
+          }
+        }
+      },
+      scales:{
+        x:{ticks:{color:'#4E7D5A',font:{size:11}},grid:{color:'rgba(61,107,72,.2)'},border:{color:'rgba(61,107,72,.3)'}},
+        y1:{position:'left',ticks:{color:'#4E7D5A',font:{size:10},callback:v=>'$'+v.toLocaleString()},grid:{color:'rgba(61,107,72,.2)'},border:{color:'rgba(61,107,72,.3)'}},
+        y2:{position:'right',ticks:{color:'#C8A971',font:{size:10},callback:v=>v>=1000?(v/1000).toFixed(0)+'k kg':v+'kg'},grid:{drawOnChartArea:false},border:{color:'rgba(200,169,113,.3)'}}
+      }
+    }
+  });
+}
+
+function setView(v,el){
+  document.querySelectorAll('.tpill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  initChart(v);
+}
+</script>
+</body>
+</html>
